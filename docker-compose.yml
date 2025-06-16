@@ -1,0 +1,51 @@
+version: '3.12'
+
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    networks:
+      - backend
+    depends_on:
+      - db
+      - db_test
+
+  db:
+    image: postgres:17
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 7866
+      POSTGRES_DB: CurrencyManager
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - backend
+
+  db_test:
+    image: postgres:17
+    restart: always
+    environment:
+      POSTGRES_USER: postgres_test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: CurrencyManager_test
+    ports:
+      - "5434:5432"
+    volumes:
+      - pg_testdata:/var/lib/postgresql/data
+    networks:
+      - backend
+
+volumes:
+  pgdata:
+  pg_testdata:
+
+networks:
+  backend:
