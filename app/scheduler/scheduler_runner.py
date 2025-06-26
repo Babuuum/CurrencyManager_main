@@ -9,12 +9,10 @@ from app.utils.logger import logger
 load_dotenv()
 
 async def main():
-    bot = Bot(token=os.getenv("tg_bot_token"))
+    bot = Bot(token=os.getenv("TG_BOT_TOKEN"))
     setup_scheduler(bot)
 
     logger.info("📅 Планировщик запущен")
-    while True:
-        await asyncio.sleep(60 * 60)  # держим процесс живым
 
 if __name__ == "__main__":
     try:

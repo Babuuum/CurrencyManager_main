@@ -1,4 +1,5 @@
 import asyncio
+import os
 
 from app.db.db_core import Base, engine
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -13,6 +14,8 @@ class Users(Base):
     tg_id: Mapped[int] = mapped_column(BigInteger, unique=True, nullable=False)
     tg_nickname: Mapped[str | None] = mapped_column(String, nullable=True)
     created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    is_superuser: Mapped[bool] =  mapped_column(default=False)
+    password: Mapped[str] = mapped_column(default="")
 
     assets: Mapped[List["Asset"]] = relationship(back_populates="user")
 

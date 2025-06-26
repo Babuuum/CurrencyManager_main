@@ -1,21 +1,47 @@
+import os
+import asyncio
+import platform
+
 import pytest
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
-from app.db.db_core import Base
+import pytest_asyncio
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
-TEST_DB_URL = "postgresql+asyncpg://user:password@localhost:5434/db_test"
+from app.db import db_core
+from app.db.models import Base, Users
 
-@pytest.fixture(scope="session")
-async def async_engine():
-    engine = create_async_engine(TEST_DB_URL, echo=True)
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+if platform.system() == "Windows":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
+DATABASE_URL = os.getenv("TEST_DB_URL")
+
+engine_test = create_async_engine(DATABASE_URL, echo=False, future=True)
+AsyncTestSession = async_sessionmaker(engine_test, expire_on_commit=False, class_=AsyncSession)
+
+
+@pytest.fixture(scope="session", autouse=True)
+async def prepare_database():
+    async with engine_test.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    yield engine
-    await engine.dispose()
+    yield
+    async with engine_test.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
 
-@pytest.fixture
-async def db_session(async_engine):
-    Session = async_sessionmaker(bind=async_engine, expire_on_commit=False)
-    async with Session() as session:
+
+@pytest_asyncio.fixture()
+async def session() -> AsyncSession:
+    async with AsyncTestSession() as session:
         yield session
-        await session.rollback()
+
+
+@pytest.fixture(autouse=True)
+def override_session(monkeypatch):
+    monkeypatch.setattr(db_core, "SessionLocal", AsyncTestSession)
+    monkeypatch.setattr(db_core, "engine", engine_test)
+
+@pytest.fixture(scope="module")
+async def test_db():
+    async with AsyncSession() as session:
+        user = Users(tg_id=123456, tg_nickname="Test")
+        session.add(user)
+        await session.commit()
+        yield session

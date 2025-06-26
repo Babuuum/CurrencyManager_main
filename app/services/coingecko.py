@@ -107,14 +107,14 @@ symbol_to_id = {
 
 
 async def get_price(symbol: str) -> float:
-    currency_id = symbol_to_id.get(symbol.upper())
-    if not currency_id:
+    currency_name = symbol_to_id.get(symbol.upper())
+    if not currency_name:
         logger.warning(f"Unknown symbol: {symbol}")
         raise ValueError(f"Unknown symbol: {symbol}")
 
-    api_url = f'https://api.coingecko.com/api/v3/simple/price?ids={currency_id}&vs_currencies=usdt'
+    api_url = f'https://api.coingecko.com/api/v3/simple/price?ids={currency_name}&vs_currencies=usd'
     async with httpx.AsyncClient() as client:
         response = await client.get(api_url)
         data = response.json()
-        logger.info(f"Price for: {symbol}:{data[currency_id]['usdt']}")
-        return data[currency_id]['usdt']
+        logger.info(f"Price for: {symbol}:{data[currency_name.lower()]['usd']}")
+        return data[currency_name.lower()]['usd']

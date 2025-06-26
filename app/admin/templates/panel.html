@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head><title>Admin Panel</title></head>
+<body>
+  <h1>Admin Panel</h1>
+
+  <h2>Users</h2>
+  <ul>
+    {% for u in users %}
+      <li>{{ u.tg_id }} - {{ u.tg_nickname }}</li>
+    {% endfor %}
+  </ul>
+
+  <h2>Assets</h2>
+  <ul>
+    {% for a in assets %}
+      <li>{{ a.name }} - {{ a.symbol }}</li>
+    {% endfor %}
+  </ul>
+
+  <h2>Data</h2>
+  <ul>
+    {% for d in data %}
+      <li>{{ d.asset_id }} - {{ d.exchange_rate }} at {{ d.datetime }}</li>
+    {% endfor %}
+  </ul>
+</body>
+</html>
