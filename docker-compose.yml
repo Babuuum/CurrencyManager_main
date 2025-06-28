@@ -14,14 +14,15 @@ services:
     depends_on:
       - db
       - db_test
+      - ngrok
 
   db:
     image: postgres:17
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 7866
-      POSTGRES_DB: CurrencyManager
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     ports:
       - "5433:5432"
     volumes:
@@ -40,6 +41,16 @@ services:
       - "5434:5432"
     volumes:
       - pg_testdata:/var/lib/postgresql/data
+    networks:
+      - backend
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    restart: unless-stopped
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_TOKEN}
+      - NGROK_REGION=eu
+    command: http web:8000
     networks:
       - backend
 
