@@ -64,10 +64,13 @@ def setup_scheduler(bot: Bot):
 
     scheduler.add_job(
         monitor_arbitrage,
-        trigger="interval",
-        hour=1,# сделать через крон
-        args=[bot],
+        trigger="cron",
+        minute=0,
+        hour="0-9,11-23",
         id="arbitrage_monitor_job",
+        args=[bot],
         replace_existing=True,
+        max_instances=1,
+        coalesce=True,
     )
     scheduler.start()
