@@ -1,4 +1,4 @@
-version: "python:3.12"
+version: "3.9"
 
 services:
   web:
@@ -15,7 +15,6 @@ services:
     depends_on:
       - db
       - db_test
-      - ngrok
 
   db:
     image: postgres:17
