@@ -1,7 +1,8 @@
-version: "python:3.12-slim"
+version: "3.9"
 
 services:
   web:
+    image: python:3.12-slim
     build: .
     ports:
       - "8000:8000"
@@ -14,7 +15,6 @@ services:
     depends_on:
       - db
       - db_test
-      - ngrok
 
   db:
     image: postgres:17
@@ -41,16 +41,6 @@ services:
       - "5434:5432"
     volumes:
       - pg_testdata:/var/lib/postgresql/data
-    networks:
-      - backend
-
-  ngrok:
-    image: ngrok/ngrok:latest
-    restart: unless-stopped
-    environment:
-      - NGROK_AUTHTOKEN=${NGROK_TOKEN}
-      - NGROK_REGION=eu
-    command: http web:8000
     networks:
       - backend
 

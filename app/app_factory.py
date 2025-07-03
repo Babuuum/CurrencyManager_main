@@ -8,7 +8,6 @@ from app.bot.bot import bot, dp
 
 from dotenv import load_dotenv
 
-from app.bot.webhook import webhook_update
 from app.scheduler.scheduler_runner import main
 from starlette.middleware.sessions import SessionMiddleware
 from app.admin import admin
@@ -22,6 +21,8 @@ def create_app() -> FastAPI:
     app.include_router(admin.router)
 
     WEBHOOK_PATH = f"/webhook/{os.getenv('TG_BOT_TOKEN')}"
+    BASE_URL = os.getenv('BASE_URL')
+    WEBHOOK_URL = BASE_URL + WEBHOOK_PATH
 
     @app.get("/ping", summary="Healthcheck")
     def ping():
@@ -37,8 +38,6 @@ def create_app() -> FastAPI:
 
     @app.on_event("startup")
     async def on_startup():
-        BASE_URL = webhook_update()
-        WEBHOOK_URL = BASE_URL + WEBHOOK_PATH
 
         await bot.set_webhook(
             WEBHOOK_URL,
