@@ -1,3 +1,4 @@
+import asyncio
 import os
 
 from dotenv import load_dotenv
@@ -17,17 +18,15 @@ api_key_bybit = os.getenv('BYBIT_API_KEY')
 uniswap_secret = os.getenv('INFURA_API_KEY')
 
 
-async def find_arbitrage_opportunity(symbol) -> dict | None:
+async def find_arbitrage_opportunity(symbol, kucoin_api, bybit_api):
     prices = {}
     try:
-        kucoin_api = KuCoinAPI(api_key_kucoin, api_secret_kucoin, passphrase_kucoin)
         prices["kucoin"] = await kucoin_api.get_price(symbol)
     except Exception as e:
         prices["kucoin"] = None
         print(f"KuCoin error: {e}")
 
     try:
-        bybit_api = BybitAPI(api_key_bybit, api_secret_bybit)
         prices["bybit"] = await bybit_api.get_price(symbol)
     except Exception as e:
         prices["bybit"] = None
@@ -53,46 +52,42 @@ async def find_arbitrage_opportunity(symbol) -> dict | None:
     }
     return result
 
-async def arbitrage_get_pairs(exchanges_list: list, top_n=10) -> set:
+async def arbitrage_get_pairs(exchanges_list, top_n=10):
     pairs = set()
     for exchange in exchanges_list:
         top_pairs = await exchange.liquid_pairs(top_n=top_n)
         pairs.update([symbol for symbol, _ in top_pairs])
-
     return pairs
 
-async def arbitrage_main(kucoin: bool = True, bybit: bool = True, top_n=10):
-    exchanges_list = []
+async def arbitrage_main(kucoin=True, bybit=True, top_n=10):
     result = {}
 
-    if kucoin:
-        kucoin_api = KuCoinAPI(api_key_kucoin, api_secret_kucoin, passphrase_kucoin)
-        exchanges_list.append(kucoin_api)
+    async with KuCoinAPI(api_key_kucoin, api_secret_kucoin, passphrase_kucoin) as kucoin_api, \
+               BybitAPI(api_key_bybit, api_secret_bybit) as bybit_api:
 
-    if bybit:
-        bybit_api = BybitAPI(api_key_bybit, api_secret_bybit)
-        exchanges_list.append(bybit_api)
+        exchanges_list = []
+        if kucoin:
+            exchanges_list.append(kucoin_api)
+        if bybit:
+            exchanges_list.append(bybit_api)
 
-    if not exchanges_list:
-        return None
+        if not exchanges_list:
+            return None
 
-    pairs = await arbitrage_get_pairs(exchanges_list, top_n=top_n)
+        pairs = await arbitrage_get_pairs(exchanges_list, top_n=top_n)
 
-    for pair in pairs:
-        try:
-            opportunity = await find_arbitrage_opportunity(pair)
-        except Exception as e:
-            print(f"Ошибка при проверке {pair}: {e}")
-            continue
+        for pair in pairs:
+            try:
+                opportunity = await find_arbitrage_opportunity(pair, kucoin_api, bybit_api)
+                print(opportunity)
+            except Exception as e:
+                print(f"Ошибка при проверке {pair}: {e}")
+                continue
 
-        if opportunity and opportunity['is_opportunity']:
-            result[pair] = opportunity
-
-    for ex in exchanges_list:
-        await ex.exchange.close()
+            if opportunity and opportunity['is_opportunity']:
+                result[pair] = opportunity
 
     return result
 
 if __name__ == "__main__":
-    qlist = ['BTC/USDT', 'ETH/USDT', 'LTC/USDT', 'SOL/USDT', 'XRP/USDT', 'ADA/USDT', 'BNB/USDT', 'DOGE/USDT', 'TRX/USDT', 'AVAX/USDT']
-    [print(find_arbitrage_opportunity(i), "\n") for i in qlist]
+    print(asyncio.run(arbitrage_main()))

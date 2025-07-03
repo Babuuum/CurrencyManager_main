@@ -7,6 +7,12 @@ class BybitAPI:
             'secret': api_secret,
         })
 
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        await self.exchange.close()
+
     async def get_price(self, symbol):
         ticker = await self.exchange.fetch_ticker(symbol)
         return ticker['last']
