@@ -1,7 +1,8 @@
-version: "python:3.12-slim"
+version: "python:3.12"
 
 services:
   web:
+    image: python:3.12-slim
     build: .
     ports:
       - "8000:8000"
