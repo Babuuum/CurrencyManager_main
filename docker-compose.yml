@@ -44,16 +44,6 @@ services:
     networks:
       - backend
 
-  ngrok:
-    image: ngrok/ngrok:latest
-    restart: unless-stopped
-    environment:
-      - NGROK_AUTHTOKEN=${NGROK_TOKEN}
-      - NGROK_REGION=eu
-    command: http web:8000
-    networks:
-      - backend
-
 volumes:
   pgdata:
   pg_testdata:
